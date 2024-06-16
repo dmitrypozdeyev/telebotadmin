@@ -1,5 +1,6 @@
 import json
 from telebot import types, TeleBot
+import sqlite3
 
 
 class Telebotadmin:
