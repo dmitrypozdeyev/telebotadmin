@@ -7,7 +7,17 @@ class Telebotadmin:
     """Класс для разграничения доступа к выполнению комманд бота.
     !!!ыВНИМАНИЕ!!! Не используйте callback hendlerы с текстом incperm """
 
-    def __init__(self, bot: TeleBot, filename="users.json", roles: dict = None):
+    def __init__(self, bot: TeleBot, filename="users", roles: dict = None, sqlite = False):
+        if sqlite:
+            self.getusers = self.getuserssqlite
+            self.saveusers = self.saveuserssqlite
+        else:
+            self.getusers = self.getusersjson
+            self.saveusers = self.saveusersjson
+        self.dbname = f"{filename}.db"
+        db = sqlite3.connect(self.dbname)
+        db.execute("CREATE TABLE IF NOT EXISTS users (chatid TEXT UNIQUE, username TEXT, permission INTEGER)")
+        db.commit()
         if roles is None:
             self.roles = ["Администратор", "Модератор", "Пользователь"]
             self.rolemessages = ["Для выполнения этого действия надо быть администратором",
@@ -17,7 +27,7 @@ class Telebotadmin:
             self.roles = roles.keys()
             self.rolemessages = [roles[perm] for perm in roles.keys()]
         self.bot = bot
-        self.filename = filename
+        self.filename = f"{filename}.json"
 
         def setperm(callback: types.CallbackQuery):
             users = self.getusers()
@@ -30,7 +40,18 @@ class Telebotadmin:
 
         self.bot.callback_query_handler(func=lambda call: "incperm" in call.data)(setperm)
 
-    def getusers(self):
+    def saveuserssqlite(self, users: dict):
+        """Сохраняет словарь с пользователями вида {chatid: {"username": "username", "permission": 0}}"""
+        with sqlite3.connect(self.dbname) as db:
+            for chatid, user in users.items():
+                db.execute("INSERT OR REPLACE INTO users VALUES (?, ?, ?)", (chatid, user["username"], user["permission"]))
+
+    def getuserssqlite(self) -> dict:
+        """Возвращает словарь с пользователями вида {chatid: {"username": "username", "permission": 0}}"""
+        with sqlite3.connect(self.dbname) as db:
+            return {row[0]: {"username": row[1], "permission": row[2]} for row in db.execute("SELECT * FROM users")}
+
+    def getusersjson(self):
         """Возвращает словарь с пользователями вида {chatid: {"username": "username", "permission": 0}}"""
         try:
             with open(self.filename, "r") as file:
@@ -38,7 +59,7 @@ class Telebotadmin:
         except FileNotFoundError:
             return {}
 
-    def saveusers(self, users: dict):
+    def saveusersjson(self, users: dict):
         """Сохраняет словарь с пользователями вида {chatid: {"username": "username", "permission": 0}}"""
         with open(self.filename, "w") as file:
             json.dump(users, file, indent=4)

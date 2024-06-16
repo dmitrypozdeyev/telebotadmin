@@ -4,7 +4,7 @@ from telebot import TeleBot, types
 
 
 bot = TeleBot(TOKEN)
-admin = Telebotadmin(bot)
+admin = Telebotadmin(bot, sqlite=True)
 
 @bot.message_handler(commands=['start'])
 def register(message):
@@ -26,6 +26,10 @@ def formoder(message : types.Message):
 def incperm(message : types.Message):
     admin.requestperminc(message)
 
+
+@bot.message_handler(commands=['showuserdict'])
+def showuserdict(message : types.Message):
+    bot.send_message(message.chat.id, str(admin.getusers()[str(message.chat.id)]))
 
 if __name__ == '__main__':
     bot.infinity_polling()
