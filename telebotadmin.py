@@ -37,6 +37,11 @@ class Telebotadmin:
         except FileNotFoundError:
             return {}
 
+    def saveusers(self, users: dict):
+        """Сохраняет словарь с пользователями вида {chatid: {"username": "username", "permission": 0}}"""
+        with open(self.filename, "w") as file:
+            json.dump(users, file, indent=4)
+
     def adduser(self, chatid: int, username: str, perm=-2):
         """Добавление пользователя по чат айди и имени пользователя"""
         perm = len(self.roles) - 1 if perm == -2 else perm
@@ -46,8 +51,7 @@ class Telebotadmin:
             "permission": perm
         }
         users[str(chatid)] = user
-        with open(self.filename, "w") as file:
-            json.dump(users, file, indent=4)
+        self.saveusers(users)
 
     def adduserm(self, message, perm=-2):
         """Добавление пользователя по чат айди и имени пользователя"""
@@ -114,8 +118,7 @@ class Telebotadmin:
         """Устанавливает привилегию по чат айди"""
         users = self.getusers()
         users[str(chatid)]["permission"] = permission
-        with open(self.filename, "w") as file:
-            json.dump(users, file, indent=4)
+        self.saveusers(users)
 
     def requestperminc(self, message: types.Message):
         """Запрос на увеличение привилегий"""
