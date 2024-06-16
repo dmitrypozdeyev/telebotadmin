@@ -9,15 +9,15 @@ class Telebotadmin:
 
     def __init__(self, bot: TeleBot, filename="users", roles: dict = None, sqlite = False):
         if sqlite:
+            self.dbname = f"{filename}.db"
+            db = sqlite3.connect(self.dbname)
+            db.execute("CREATE TABLE IF NOT EXISTS users (chatid TEXT UNIQUE, username TEXT, permission INTEGER)")
+            db.commit()
             self.getusers = self.getuserssqlite
             self.saveusers = self.saveuserssqlite
         else:
             self.getusers = self.getusersjson
             self.saveusers = self.saveusersjson
-        self.dbname = f"{filename}.db"
-        db = sqlite3.connect(self.dbname)
-        db.execute("CREATE TABLE IF NOT EXISTS users (chatid TEXT UNIQUE, username TEXT, permission INTEGER)")
-        db.commit()
         if roles is None:
             self.roles = ["Администратор", "Модератор", "Пользователь"]
             self.rolemessages = ["Для выполнения этого действия надо быть администратором",
